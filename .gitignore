@@ -1,0 +1,17 @@
+# Virtual environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Dataset lớn
+*.csv
+*.zip
+
+# IDE settings
+.idea/
+.vscode/
