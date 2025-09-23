@@ -1,4 +1,5 @@
 import pandas as pd
+from datetime import datetime
 
 #Extract
 def extract(file_path: str) -> pd.DataFrame:
@@ -10,7 +11,7 @@ def extract(file_path: str) -> pd.DataFrame:
 def transform(df: pd.DataFrame) -> pd.DataFrame:
     print("Transforming data...")
     #Remove unnecessary columns and rename columns
-    df = df.drop(['LongName','playerUrl','photoUrl','POT', 'Loan Date End'],axis=1)
+    df = df.drop(['LongName','playerUrl','photoUrl','POT'],axis=1)
     df = df.rename(columns={'↓OVA':'OVA'})
     #Remove downstream characters
     df['Club'] = df['Club'].str.replace('\n\n\n\n','')
@@ -64,6 +65,36 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         'SM': 'SM Rating',
         'IR': 'IR Rating'
     },inplace= True)
+    #Change information about type of contract 
+    def type(x):
+        if 'Free' in x:
+            return 'Free'
+        if 'Loan' in x:
+            return 'Loan'
+        if '~' in x:
+            return 'Contract'
+        else:
+            return pd.NA
+    def start_time_contract(x):
+        if '~' in x:
+            return int(x[:4])
+        if 'Loan' in x:
+            x = x.strip(' On Loan')
+            x = datetime.strptime(x, "%b %d, %Y")
+            return x.date()
+        else: 
+            return pd.NA
+    def end_time_contract(type, contract, loan):
+        if type == 'Contract':
+            return int(contract[-4:])
+        if type == 'Loan':
+            loan = datetime.strptime(loan, "%b %d, %Y")
+            return loan.date()
+        else:
+            return pd.NA
+    df['Type of Contract'] = df['Contract'].apply(type)
+    df['Start year'] = df['Contract'].apply(start_time_contract)
+    df['End year'] = df.apply(lambda row: end_time_contract(row['Type of Contract'], row['Contract'], row['Loan Date End']),axis=1)
     return df
 
 def run_pipeline():
