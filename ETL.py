@@ -36,8 +36,34 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     df.rename(columns={
         'Height': 'Height in cm',
         'Weight': 'Weight in kg'
-    })
-    
+    }, inplace= True)
+    #Convert money string to numerical 
+    def money(x):
+        if '€' in x:
+            x = x.replace('€','')
+        if 'M' in x:
+            x = x.replace('M','')
+            return int(float(x)*1000000)
+        if 'K' in x:
+            x = x.replace('K','')
+            return int(float(x))
+    df['Value'] = df['Value'].apply(money)/1000000
+    df['Wage'] = df['Wage'].apply(money)
+    df['Release Clause'] = df['Release Clause'].apply(money)/1000000
+    df.rename(columns={
+        'Value': 'Value in Euro Million',
+        'Wage': 'Wage in Euro',
+        'Release Clause': 'Release Clause in Euro Million'
+    }, inplace= True)
+    #Remove character '★' in columns W/f, SM, IR
+    df['W/F'] = df['W/F'].str.replace('★','')
+    df['SM'] = df['SM'].str.replace('★','')
+    df['IR'] = df['IR'].str.replace('★','')
+    df.rename(columns={
+        'W/F': 'W/F Rating',
+        'SM': 'SM Rating',
+        'IR': 'IR Rating'
+    },inplace= True)
     return df
 
 def run_pipeline():
