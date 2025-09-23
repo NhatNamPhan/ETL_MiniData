@@ -14,6 +14,30 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     df = df.rename(columns={'↓OVA':'OVA'})
     #Remove downstream characters
     df['Club'] = df['Club'].str.replace('\n\n\n\n','')
+    #Convert the height and weight column to numerical forms
+    def ft_to_cm(x):
+        if "'" in x:
+            ft = x.replace("'", ".").replace('"','')
+            cm = round(float(ft)*30.48,0)
+            return int(cm)
+        else:
+            return x
+    def lbs_to_kg(x):
+        if "lbs" in x:
+            lbs = x.replace("lbs","")
+            kg = round(float(lbs)*0.4356,0)
+            return int(kg)
+        else:
+            return x
+    df['Height'] = df['Height'].str.strip('cm')
+    df['Weight'] = df['Weight'].str.strip('kg')
+    df['Height'] = df['Height'].apply(ft_to_cm)
+    df['Weight'] = df['Weight'].apply(lbs_to_kg)
+    df.rename(columns={
+        'Height': 'Height in cm',
+        'Weight': 'Weight in kg'
+    })
+    
     return df
 
 def run_pipeline():
