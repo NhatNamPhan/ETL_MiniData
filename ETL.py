@@ -1,15 +1,16 @@
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 #Extract
 def extract(file_path: str) -> pd.DataFrame:
-    print("Extracting data...")
+    print('Extracting data...')
     df = pd.read_csv(file_path)
     return df
 
 #Transform
 def transform(df: pd.DataFrame) -> pd.DataFrame:
-    print("Transforming data...")
+    print('Transforming data...')
     #Remove unnecessary columns and rename columns
     df = df.drop(['LongName','playerUrl','photoUrl','POT'],axis=1)
     df = df.rename(columns={'↓OVA':'OVA'})
@@ -95,13 +96,44 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     df['Type of Contract'] = df['Contract'].apply(type)
     df['Start year'] = df['Contract'].apply(start_time_contract)
     df['End year'] = df.apply(lambda row: end_time_contract(row['Type of Contract'], row['Contract'], row['Loan Date End']),axis=1)
+    df = df[list(df.columns[:7]) + list(df.columns[-3:]) + list(df.columns[8:-3])]
+    df.drop(columns=['Loan Date End'], inplace= True)
+    #Change Attacking AVG, Skill AVG, Movement AVG, Power AVG, Mentality AVG, Defending AVG, Goalkeeping AVG
+    df['Attacking'] = (df['Attacking'] / 5).round().astype('int64')
+    
+    df['Skill'] = (df['Skill'] / 5).round().astype('int64')
+
+    df['Movement'] = (df['Movement'] / 5).round().astype('int64')
+
+    df['Power'] = (df['Power'] / 5).round().astype('int64')
+
+    df['Mentality'] = (df['Mentality'] / 6).round().astype('int64')
+    
+    df['Defending'] = (df['Defending'] / 3).round().astype('int64')
+
+    df['Goalkeeping'] = (df['Goalkeeping'] / 5).round().astype('int64')
+
+    df.rename(columns={'Attacking':'Attacking AVG', 'Skill':'Skill AVG', 'Movement':'Movement AVG',
+                    'Power':'Power AVG', 'Mentality':'Mentality AVG', 'Defending':'Defending AVG', 'Goalkeeping':'Goalkeeping AVG'}, inplace= True)
+    #Fill NaN values in 'Hits in K' with the mean of the column
+    def covert_hits(x):
+        if pd.isna(x):
+            return np.nan
+        elif 'K' in str(x):
+            return float(x[:-1])
+        else:
+            return float(x)
+
+    df['Hits in K'] = df['Hits'].apply(covert_hits)
+    df.drop(columns=['Hits'], inplace= True)
+    df.fillna({'Hits in K': df['Hits in K'].mean()}, inplace= True)
     return df
 
 def run_pipeline():
-    file_path = "data/fifa21_raw_data_v2.csv"
+    file_path = 'data/fifa21_raw_data_v2.csv'
     df = extract(file_path)
     df = transform(df)
     print(df.head())
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run_pipeline()
