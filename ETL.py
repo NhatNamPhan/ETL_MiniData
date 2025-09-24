@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from sqlalchemy import create_engine
+import os
+from dotenv import load_dotenv
 
 #Extract
 def extract(file_path: str) -> pd.DataFrame:
@@ -49,6 +52,7 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         if 'K' in x:
             x = x.replace('K','')
             return int(float(x))
+        return int(x)
     df['Value'] = df['Value'].apply(money)/1000000
     df['Wage'] = df['Wage'].apply(money)
     df['Release Clause'] = df['Release Clause'].apply(money)/1000000
@@ -129,11 +133,35 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     df.fillna({'Hits in K': df['Hits in K'].mean()}, inplace= True)
     return df
 
+#Load to CSV
+def load_to_csv(df: pd.DataFrame, output_path: str = 'data/fifa21_clean.csv'):
+    print('Loading data to CSV...')
+    df.to_csv(output_path, index= False ,encoding='utf-8-sig')
+    print(f'Data saved to {output_path}')
+    
+#Load file .env
+load_dotenv()
+
+#Load to PostgreSQL
+def load_to_postgres(df, table_name= 'fifa21_clean'):
+    print('Loading data to PostgresSQL...')
+    DB_NAME = os.getenv("DB_NAME")
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_HOST = os.getenv("DB_HOST")
+    DB_PORT = os.getenv("DB_PORT")
+    engine = create_engine(f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
+    df.to_sql(table_name, engine, if_exists='replace', index= False)
+    print(f'Data loaded to PostgreSQL table {table_name}')
+    
 def run_pipeline():
     file_path = 'data/fifa21_raw_data_v2.csv'
     df = extract(file_path)
     df = transform(df)
-    print(df.head())
+    #load to csv
+    load_to_csv(df)
+    #load to postgres
+    load_to_postgres(df, table_name='fifa21_clean')
 
 if __name__ == '__main__':
     run_pipeline()
