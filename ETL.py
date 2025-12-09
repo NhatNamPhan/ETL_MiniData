@@ -113,8 +113,25 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         df['Type of Contract'] = df['Contract'].apply(type_contract)
         df['Start year'] = df['Contract'].apply(start_time_contract)
         df['End year'] = df.apply(lambda row: end_time_contract(row['Type of Contract'], row['Contract'], row['Loan Date End']),axis=1)
-        df = df[list(df.columns[:7]) + list(df.columns[-3:]) + list(df.columns[8:-3])]
-        df.drop(columns=['Loan Date End'], inplace= True)
+        
+        #Reorder columns
+        cols = list(df.columns)
+        cols.remove('Loan Date End')
+        
+        block1 = ['Type of Contract', 'Start year', 'End year']
+        block2 = ['Best Position']
+        
+        for c in block1 + block2:
+            cols.remove(c)
+            
+        pos_contract = cols.index('Contract') + 1
+        for i, c in enumerate(block1):
+            cols.insert(pos_contract + i, c)
+            
+        pos_position = cols.index('Positions') + 1
+        cols.insert(pos_position, 'Best Position')
+        
+        df = df[cols]
         
         # Ratings normalize 
         df['Attacking'] = (df['Attacking'] / 5).round().astype('int64')

@@ -1,7 +1,7 @@
 pandas
 sqlalchemy
-psycopg2
+psycopg2-binary
 python-dotenv
 numpy
-stream
+streamlit
 matplotlib
